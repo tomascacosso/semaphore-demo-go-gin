@@ -1,0 +1,94 @@
+version: v1.0
+name: "\U0001F680 Go Project CI/CD Pipeline"
+agent:
+  machine:
+    type: r1-standard-2
+    os_image: ubuntu2404
+fail_fast:
+  stop:
+    when: branch != 'main'
+auto_cancel:
+  running:
+    when: branch != 'main'
+  queued:
+    when: branch != 'main'
+global_job_config:
+  prologue:
+    commands:
+      - checkout
+      - sem-version go 1.18
+      - cache restore
+blocks:
+  - name: "\U0001F6E0️ Setup & Dependency Caching"
+    dependencies: []
+    task:
+      jobs:
+        - name: "\U0001F4E6 Install dependencies"
+          commands:
+            - go mod download
+            - cache store
+  - name: "\U0001F50D Code Quality Checks"
+    dependencies:
+      - "\U0001F6E0️ Setup & Dependency Caching"
+    task:
+      jobs:
+        - name: "\U0001F3A8 go fmt check"
+          commands:
+            - go fmt ./...
+        - name: "\U0001F4DD golangci-lint"
+          commands:
+            - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+            - golangci-lint run ./...
+        - name: "\U0001F9D0 go vet"
+          commands:
+            - go vet ./...
+        - name: "\U0001F50E staticcheck"
+          commands:
+            - go install honnef.co/go/tools/cmd/staticcheck@latest
+            - staticcheck ./...
+  - name: "\U0001F512 Security Scanning"
+    dependencies:
+      - "\U0001F6E0️ Setup & Dependency Caching"
+    task:
+      jobs:
+        - name: "\U0001F6E1️ govulncheck"
+          commands:
+            - go install golang.org/x/vuln/cmd/govulncheck@latest
+            - govulncheck ./...
+  - name: ✅ Testing
+    dependencies:
+      - "\U0001F512 Security Scanning"
+    task:
+      jobs:
+        - name: "\U0001F9EA Run Go Tests"
+          parallelism: 4
+          commands:
+            - go install gotest.tools/gotestsum@latest
+            - packages=$(go list ./... | awk "NR % $SEMAPHORE_JOB_TOTAL == $SEMAPHORE_JOB_INDEX") gotestsum --junitfile reports.xml $packages
+      epilogue:
+        always:
+          commands:
+            - test-results publish reports.xml
+  - name: "\U0001F3D7️ Build Artifact"
+    dependencies:
+      - ✅ Testing
+    task:
+      jobs:
+        - name: "\U0001F528 Compile Go Binary"
+          commands:
+            - go build -o app
+  - name: "\U0001F433 Docker Image Build"
+    dependencies:
+      - "\U0001F3D7️ Build Artifact"
+    task:
+      jobs:
+        - name: "\U0001F40B Build & Tag Docker Image"
+          commands:
+            - 'docker build -t my-app:$SEMAPHORE_GIT_SHA .'
+            - 'docker tag my-app:$SEMAPHORE_GIT_SHA my-app:latest'
+after_pipeline:
+  task:
+    jobs:
+      - name: "\U0001F4CA Publish Test Results"
+        commands:
+          - test-results gen-pipeline-report
