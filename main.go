@@ -21,6 +21,7 @@ func main() {
 	 router.GET("/article/view/:article_id", getArticle)
 
   // Start serving the application
-  router.Run()
+  if err := router.Run(); err != nil {
+    log.Fatal("Fail starting server: ", err)
 
 }

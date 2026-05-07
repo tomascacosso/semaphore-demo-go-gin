@@ -39,7 +39,7 @@ func getArticle(c *gin.Context) {
 
     } else {
       // If the article is not found, abort with an error
-      c.AbortWithError(http.StatusNotFound, err)
+      _ = c.AbortWithError(http.StatusNotFound, err)
     }
 
   } else {
