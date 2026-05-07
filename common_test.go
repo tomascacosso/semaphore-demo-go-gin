@@ -16,6 +16,12 @@ func TestMain(m *testing.M) {
   //Set Gin to Test Mode
   gin.SetMode(gin.TestMode)
 
+	saveLists()
+
+	code := m.Run()
+
+	restoreLists()
+
   // Run the other tests
   os.Exit(m.Run())
 }
