@@ -2,8 +2,10 @@
 
 package main
 
-import "github.com/gin-gonic/gin"
-
+import (
+	"github.com/gin-gonic/gin"
+	"log"
+)
 var router *gin.Engine
 
 func main() {
