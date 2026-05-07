@@ -4,7 +4,6 @@ package main
 
 import (
   "io"
-	"os"
   "net/http"
   "net/http/httptest"
   "strings"
