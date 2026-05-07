@@ -22,6 +22,6 @@ func main() {
 
   // Start serving the application
   if err := router.Run(); err != nil {
-    log.Fatal("Fail starting server: ", err)
+    log.Fatal("Fail starting server: ", err) 
 	}
 }
