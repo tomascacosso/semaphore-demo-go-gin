@@ -21,9 +21,8 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	restoreLists()
-
   // Run the other tests
-  os.Exit(m.Run())
+  os.Exit(code)
 }
 
 // Helper function to create a router during testing
